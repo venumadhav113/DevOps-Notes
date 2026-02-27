@@ -1,0 +1,43 @@
+resource "aws_vpc" "MyVPC" {
+tags = {
+Name = "VPC-1"
+}
+cidr_block = "10.0.0.0/24"
+instance_tenancy = "default"
+enable_dns_hostnames = "true"
+}
+
+resource "aws_subnet" "Mysubnet" {
+vpc_id = aws_vpc.MyVPC.id
+cidr_block = "10.0.0.0/28"
+availability_zone = "us-east-1a"
+tags = {
+Name = "subnect-1"
+}
+map_public_ip_on_launch = "true"
+}
+
+resource "aws_internet_gateway" "MyGate" {
+tags = {
+Name = "IGW-1"
+}
+vpc_id = aws_vpc.MyVPC.id
+
+}
+
+resource "aws_route_table" "MyRoute" {
+vpc_id = aws_vpc.MyVPC.id
+tags = {
+Name = "RT-1"
+}
+route {
+gateway_id = aws_internet_gateway.MyGate.id
+cidr_block = "0.0.0.0/0"
+}
+
+}
+
+resource "aws_route_table_association" "RT-ass" {
+subnet_id = aws_subnet.Mysubnet.id
+route_table_id = aws_route_table.MyRoute.id
+}

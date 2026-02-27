@@ -1,0 +1,25 @@
+step-1:
+*******
+notepad $env:USERPROFILE\.ssh\config
+
+Step-2:
+*******
+powercfg /change monitor-timeout-ac 0
+powercfg /change standby-timeout-ac 0
+
+Step-3:
+*******
+
+EC-2 side fix:
+sudo vi /etc/ssh/sshd_config
+
+add this lines,
+
+ClientAliveInterval 60
+ClientAliveCountMax 100
+
+
+Restart sshd:
+
+sudo systemctl restart sshd
+

@@ -1,0 +1,52 @@
+pipeline{
+    agent any
+    tools{
+        maven "mymaven"
+    }
+    stages{
+        stage("Code"){
+            steps{
+                git 'https://github.com/venumadhav113/dockerwebapp.git'
+            }
+        }
+        stage("CQA"){
+            steps{
+                 withSonarQubeEnv("sonar") {
+                    sh "mvn clean verify sonar:sonar -Dsonar.projectKey=sonar"
+                }
+            }
+        }
+        stage("Build"){
+            steps{
+                sh "mvn clean package"
+                sh "cp -r target Docker-app"
+            }
+        }
+        stage("Nexus artifact"){
+            steps{
+               nexusArtifactUploader artifacts: [[artifactId: 'vprofile', classifier: '', file: 'target/vprofile-v2.1.war', type: 'war']], credentialsId: 'id', groupId: 'com.visualpathit', nexusUrl: '54.205.192.173:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'Myrepo', version: 'v2.1'
+            }
+        }
+        stage("Docker file"){
+            steps{
+                
+                sh "docker build -t appimage Docker-app"
+                sh "docker build -t dbimage Docker-db"
+            }
+        }
+        /*stage("Deploy with Container"){
+            steps{
+                sh "docker run -d --name devopsdb -p 3306:3306 dbimage"
+                sh "docker run -itd --name appcont -p 1111:8080 --link devopsdb:mysqlconnect appimage"
+            }
+        } */
+    }
+    post{
+        always{
+            mail to: 'venumadhaveluri113@gmail.com',
+            subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+             body: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        }
+    }
+    
+}
